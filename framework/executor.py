@@ -41,7 +41,9 @@ def run_scenario(page: Page, excel: ExcelManager, network: NetworkCapture) -> di
     steps = load_scenario(excel)
     results: list[tuple[ScenarioStep, report.StepResult]] = []
 
-    for step in steps:
+    for i, step in enumerate(steps, start=1):
+        print(f"Step {i} - {step.step_code} check")
+
         if step.step_code in NON_EXECUTABLE_STEPS:
             continue
 

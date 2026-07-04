@@ -1,11 +1,10 @@
-"""
-settings.py
-Owns: tunable constants only (timeouts, headless flag, dirs). No logic here.
-"""
 import os
 from config.environment import BASE_DIR
 
 HEADLESS = os.getenv("HEADLESS", "true").lower() == "true"
+
+BROWSER = os.getenv("BROWSER", "chromium").lower()
+
 DEFAULT_TIMEOUT_MS = 30_000
 NETWORK_IDLE_TIMEOUT_MS = 15_000
 SHORT_WAIT_MS = 1_000

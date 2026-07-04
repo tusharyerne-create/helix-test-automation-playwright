@@ -10,7 +10,16 @@ def search_account(page: Page, account_id: str) -> None:
     search_box = page.get_by_role("textbox", name="Search accounts...")
     search_box.click()
     search_box.fill(account_id)
-    page.get_by_role("button", name="Search", exact=True).click()
+    search_box.press("Enter")
+    page.wait_for_timeout(500)
+
+    search_buttons = page.get_by_role("button", name="Search", exact=True)
+    for i in range(search_buttons.count()):
+        candidate = search_buttons.nth(i)
+        if candidate.is_visible() and candidate.is_enabled():
+            candidate.click(timeout=5000, force=True)
+            break
+
     page.wait_for_load_state("networkidle")
 
 
@@ -26,7 +35,12 @@ def run(*, page: Page, excel: ExcelManager, network: NetworkCapture, input_sheet
         if not account_id:
             continue
         search_account(page, account_id)
-        found = page.get_by_role("button", name=account_id).is_visible()
+        result = page.get_by_role("button", name=account_id)
+        try:
+            result.wait_for(state="visible", timeout=8000)
+            found = True
+        except Exception:
+            found = False
         report.record_sheet_row_result(
             excel, sheet_name, idx,
             status="✅ PASSED" if found else "❌ FAILED",

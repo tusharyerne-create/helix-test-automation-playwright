@@ -1,6 +1,7 @@
 import json
 from playwright.sync_api import Page
 from framework.network import NetworkCapture
+from playwright.sync_api import expect
 
 
 def _force_close_search_modal(page: Page) -> None:
@@ -57,18 +58,56 @@ def dismiss_error_toast(page: Page, timeout: int = 1500) -> bool:
     return True
 
 def do_global_search(page: Page, *, search_term: str) -> None:
+    # Open Global Search
     page.get_by_role("button", name="Global Search (ctrl+k)").click()
+
     search_box = page.get_by_role("textbox", name="Search modules...")
-    try:
-        search_box.wait_for(state="visible", timeout=5000)
-        search_box.fill(search_term)
-        search_box.press("Enter")
-        page.get_by_role("button", name=search_term).wait_for(state="visible", timeout=5000)
-        page.get_by_role("button", name=search_term).click()
-        page.wait_for_load_state("networkidle")
-    except Exception:
-        _force_close_search_modal(page)
-        raise
+    expect(search_box).to_be_visible(timeout=10000)
+
+    # Clear existing text
+    search_box.click()
+    search_box.press("Control+A")
+    search_box.press("Backspace")
+
+    # Search
+    search_box.fill(search_term)
+
+    # Wait for results
+    page.wait_for_timeout(1500)
+
+    matches = page.get_by_role("button", name=search_term)
+
+    if matches.count() == 0:
+        raise RuntimeError(f"No search results found for '{search_term}'")
+
+    for i in range(matches.count()):
+        btn = matches.nth(i)
+
+        if not btn.is_visible():
+            continue
+
+        try:
+            btn.scroll_into_view_if_needed()
+            btn.click(timeout=5000)
+
+            # Wait for navigation/UI update
+            page.wait_for_timeout(2500)
+
+            # Search popup should disappear if module opened
+            if search_box.count() == 0 or not search_box.first.is_visible():
+                return
+
+            # OR List View page loaded
+            if page.get_by_role("textbox", name="Search accounts...").count() > 0:
+                return
+
+        except Exception as e:
+            pass
+
+    raise RuntimeError(
+        f"Could not open '{search_term}'. "
+        "Global Search results were found but none opened the page."
+    )
 
 
 def sheet_name_from_input(input_sheet: str) -> str:
@@ -77,19 +116,52 @@ def sheet_name_from_input(input_sheet: str) -> str:
     return input_sheet
 
 
+
 def open_followup(page: Page, account_id: str) -> None:
+    # Open List View
     do_global_search(page, search_term="List View")
+
+    # Search Account
     search_box = page.get_by_role("textbox", name="Search accounts...")
+    search_box.wait_for(state="visible", timeout=10000)
     search_box.click()
     search_box.fill(account_id)
-    page.get_by_role("button", name="Search", exact=True).click()
-    page.wait_for_load_state("networkidle")
-    page.get_by_role("button", name=account_id).click()
-    page.wait_for_load_state("networkidle")
-    page.get_by_role("button", name="Collection").click()
-    page.get_by_role("menuitem", name="Follow Up").click()
+    search_box.press("Enter")
+
     page.wait_for_timeout(1000)
 
+    # Click Search
+    search_btn = page.get_by_role("button", name="Search", exact=True)
+    search_btn.wait_for(state="visible", timeout=5000)
+    search_btn.click(force=True)
+
+    page.wait_for_load_state("networkidle")
+
+    ## Wait until search results are loaded
+    page.wait_for_timeout(2000)
+
+    account = page.get_by_text(account_id, exact=True).first
+
+    account.wait_for(state="visible", timeout=10000)
+
+    account.scroll_into_view_if_needed()
+    account.click(force=True)
+
+    page.wait_for_load_state("networkidle")
+
+    collection = page.get_by_role("button", name="Collection")
+
+    collection.wait_for(state="visible", timeout=10000)
+
+    collection.click()
+
+    followup = page.get_by_role("menuitem", name="Follow Up")
+
+    followup.wait_for(state="visible", timeout=5000)
+
+    followup.click()
+
+    page.wait_for_timeout(2000)
 
 def select_result_code(page: Page, result_code: str) -> None:
     dropdown = page.get_by_role("combobox", name="Result")
