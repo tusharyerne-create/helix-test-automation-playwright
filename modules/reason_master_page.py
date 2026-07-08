@@ -1,7 +1,6 @@
 import re as _re
 from playwright.sync_api import Page
 from framework.excel import ExcelManager
-from framework.network import NetworkCapture
 from framework import report
 from modules.common import do_global_search, sheet_name_from_input
 
@@ -191,7 +190,7 @@ def execute_one(page: Page, reason_type: str, reason_code: str, reason_desc: str
     return True, "ADD + DELETE verified"
 
 
-def run(*, page: Page, excel: ExcelManager, network: NetworkCapture, input_sheet: str) -> None:
+def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
     sheet_name = sheet_name_from_input(input_sheet) or "reason_master"
     rows = excel.read_sheet_as_dicts(sheet_name)
     if not rows:

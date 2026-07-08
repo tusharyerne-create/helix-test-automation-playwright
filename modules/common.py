@@ -1,6 +1,5 @@
 import json
 from playwright.sync_api import Page
-from framework.network import NetworkCapture
 from playwright.sync_api import expect
 
 
@@ -208,9 +207,7 @@ def click_save(page: Page) -> None:
     save_btn.click(force=True)
 
 
-def execute_result(page: Page, network: NetworkCapture, result_code: str) -> tuple[str, str]:
-    network.clear()
-
+def execute_result(page: Page, result_code: str) -> tuple[str, str]:
     try:
         select_result_code(page, result_code)
     except Exception as dropdown_err:
@@ -228,13 +225,4 @@ def execute_result(page: Page, network: NetworkCapture, result_code: str) -> tup
         return str(response.status), output
     except Exception as wait_err:
         page.wait_for_timeout(3000)
-        fallback = (network.get_api_response("updateFollowup") or network.get_api_response("followup")
-                    or network.get_api_response("earlyCollections") or network.get_last_error_response())
-        if fallback:
-            try:
-                rj = json.loads(fallback["body"])
-                output = rj.get("message") or rj.get("error") or fallback["body"]
-            except Exception:
-                output = fallback["body"] or str(wait_err)
-            return str(fallback["status"]), output
         return "5xx", str(wait_err)

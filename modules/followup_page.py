@@ -1,6 +1,5 @@
 from playwright.sync_api import Page
 from framework.excel import ExcelManager
-from framework.network import NetworkCapture
 from framework import report
 from modules.common import open_followup, execute_result, sheet_name_from_input
 
@@ -22,7 +21,7 @@ def _resolve_account_id(excel: ExcelManager, row: dict) -> str:
     return ""
 
 
-def run(*, page: Page, excel: ExcelManager, network: NetworkCapture, input_sheet: str) -> None:
+def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
     sheet_name = sheet_name_from_input(input_sheet)
     rows = excel.read_sheet_as_dicts(sheet_name)
     if not rows:
@@ -30,7 +29,6 @@ def run(*, page: Page, excel: ExcelManager, network: NetworkCapture, input_sheet
 
     any_failed = False
     any_tested = False
-    current_account = None
 
     for idx, row in enumerate(rows, start=2):
         result_code = str(row.get("Result Code") or "").strip()
@@ -47,12 +45,12 @@ def run(*, page: Page, excel: ExcelManager, network: NetworkCapture, input_sheet
                     f"No AccountNo found on '{sheet_name}' row {idx} or on 'listview' sheet"
                 )
 
-            if account_id != current_account:
-                current_account = account_id
-                open_followup(page, current_account)
+            if account_id != getattr(page, "_current_open_account", None):
+                open_followup(page, account_id)
+                page._current_open_account = account_id
 
             any_tested = True
-            http_status, output = execute_result(page, network, result_code)
+            http_status, output = execute_result(page, result_code)
             try:
                 passed = 200 <= int(http_status) < 300
             except ValueError:

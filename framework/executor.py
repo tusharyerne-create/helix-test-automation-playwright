@@ -1,6 +1,5 @@
 from playwright.sync_api import Page
 from framework.excel import ExcelManager
-from framework.network import NetworkCapture
 from framework import screenshot
 from framework import report
 from framework.scenario import ScenarioStep, load_scenario
@@ -37,7 +36,9 @@ def _reset_ui_state(page: Page) -> None:
     _force_close_search_modal(page)
 
 
-def run_scenario(page: Page, excel: ExcelManager, network: NetworkCapture) -> dict:
+def run_scenario(page: Page, excel: ExcelManager) -> dict:
+    screenshot.clear_screenshot_dir()
+
     steps = load_scenario(excel)
     results: list[tuple[ScenarioStep, report.StepResult]] = []
 
@@ -54,11 +55,11 @@ def run_scenario(page: Page, excel: ExcelManager, network: NetworkCapture) -> di
             report.record_step_result(excel, step, result)
             continue
 
-        network.clear()
         _reset_ui_state(page)
         try:
-            module_fn(page=page, excel=excel, network=network, input_sheet=step.input_sheet)
-            result = report.StepResult(status="PASSED")
+            module_fn(page=page, excel=excel, input_sheet=step.input_sheet)
+            shot_path = screenshot.capture(page, step.step_code, step.input_sheet or "")
+            result = report.StepResult(status="PASSED", screenshot=shot_path)
         except Exception as exc:
             shot_path = screenshot.capture(page, step.step_code, step.input_sheet or "")
             result = report.StepResult(status="FAILED", screenshot=shot_path, remarks=str(exc))

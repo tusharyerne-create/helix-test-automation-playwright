@@ -1,6 +1,5 @@
 from playwright.sync_api import Page
 from framework.excel import ExcelManager
-from framework.network import NetworkCapture
 from framework import report
 from modules.common import do_global_search, sheet_name_from_input
 
@@ -23,7 +22,7 @@ def search_account(page: Page, account_id: str) -> None:
     page.wait_for_load_state("networkidle")
 
 
-def run(*, page: Page, excel: ExcelManager, network: NetworkCapture, input_sheet: str) -> None:
+def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
     sheet_name = sheet_name_from_input(input_sheet)  # "listview"
     rows = excel.read_sheet_as_dicts(sheet_name)
     if not rows:
