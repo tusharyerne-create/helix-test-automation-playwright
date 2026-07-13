@@ -22,7 +22,7 @@ def search_account(page: Page, account_id: str) -> None:
     page.wait_for_load_state("networkidle")
 
 
-def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
+def run(*, page: Page, excel: ExcelManager, output_excel: ExcelManager, input_sheet: str) -> None:
     sheet_name = sheet_name_from_input(input_sheet)  # "listview"
     rows = excel.read_sheet_as_dicts(sheet_name)
     if not rows:
@@ -41,7 +41,7 @@ def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
         except Exception:
             found = False
         report.record_sheet_row_result(
-            excel, sheet_name, idx,
+            output_excel, sheet_name, idx,
             status="✅ PASSED" if found else "❌ FAILED",
         )
         any_failed = any_failed or not found

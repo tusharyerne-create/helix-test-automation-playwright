@@ -24,10 +24,13 @@ screenshots/            # failure screenshots, cleared/populated per run
 ## Setup
 
 ```bash
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+(
+- python -m venv venv
+- .\venv\Scripts\Activate. ) -> Optional but best practice to make separate profile for testing virtually
+
+-- Mandatory
 pip install -r requirements.txt
-playwright install chromium
+playwright install firefox
 ```
 
 ## Configuration

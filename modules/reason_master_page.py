@@ -93,7 +93,6 @@ def fill_reason_description(page: Page, reason_description: str) -> None:
         except Exception:
             pass
 
-      
         try:
             candidate.click(timeout=2000)
             page.wait_for_timeout(200)
@@ -190,7 +189,7 @@ def execute_one(page: Page, reason_type: str, reason_code: str, reason_desc: str
     return True, "ADD + DELETE verified"
 
 
-def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
+def run(*, page: Page, excel: ExcelManager, output_excel: ExcelManager, input_sheet: str) -> None:
     sheet_name = sheet_name_from_input(input_sheet) or "reason_master"
     rows = excel.read_sheet_as_dicts(sheet_name)
     if not rows:
@@ -208,7 +207,7 @@ def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
 
         passed, remarks = execute_one(page, reason_type, reason_code, reason_desc)
         report.record_sheet_row_result(
-            excel, sheet_name, idx,
+            output_excel, sheet_name, idx,
             actual=remarks,
             status="✅ PASSED" if passed else "❌ FAILED",
         )

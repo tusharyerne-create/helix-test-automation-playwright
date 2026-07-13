@@ -3,10 +3,10 @@ from framework.excel import ExcelManager
 from framework import report
 from framework import screenshot
 from framework.errors import StepFailure
-from modules.common import do_global_search, sheet_name_from_input
+from modules.common import do_global_search, sheet_name_from_input, _force_close_search_modal, dismiss_error_toast
 
 
-def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
+def run(*, page: Page, excel: ExcelManager, output_excel: ExcelManager, input_sheet: str) -> None:
     sheet_name = sheet_name_from_input(input_sheet)
 
     rows = excel.read_sheet_as_dicts(sheet_name)
@@ -22,6 +22,11 @@ def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
         if not menu_name:
             continue
 
+        # start each row from a clean UI state — a previous row's failure must
+        # not leave the search modal open/stale for this row's attempt
+        dismiss_error_toast(page)
+        _force_close_search_modal(page)
+
         opened = False
         error_detail = ""
 
@@ -32,7 +37,7 @@ def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
             shot_path = screenshot.capture(page, sheet_name, menu_name, "FAIL")
 
             report.record_sheet_row_result(
-                excel,
+                output_excel,
                 sheet_name,
                 idx,
                 status="❌ FAILED",
@@ -68,7 +73,7 @@ def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
         if opened:
 
             report.record_sheet_row_result(
-                excel,
+                output_excel,
                 sheet_name,
                 idx,
                 status="✅ PASSED",
@@ -80,7 +85,7 @@ def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
             shot_path = screenshot.capture(page, sheet_name, menu_name, "FAIL")
 
             report.record_sheet_row_result(
-                excel,
+                output_excel,
                 sheet_name,
                 idx,
                 status="❌ FAILED",

@@ -21,7 +21,7 @@ def _resolve_account_id(excel: ExcelManager, row: dict) -> str:
     return ""
 
 
-def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
+def run(*, page: Page, excel: ExcelManager, output_excel: ExcelManager, input_sheet: str) -> None:
     sheet_name = sheet_name_from_input(input_sheet)
     rows = excel.read_sheet_as_dicts(sheet_name)
     if not rows:
@@ -61,7 +61,7 @@ def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
             http_status, output, passed = "ERROR", str(row_err), False
 
         report.record_sheet_row_result(
-            excel, sheet_name, idx,
+            output_excel, sheet_name, idx,
             actual=output,
             status="✅ PASSED" if passed else "❌ FAILED",
             http_status=http_status,

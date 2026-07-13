@@ -13,7 +13,6 @@ from modules import (
     menu_page,
     reason_master_page,
     logout_page,
-
 )
 
 MODULE_REGISTRY = {
@@ -24,9 +23,7 @@ MODULE_REGISTRY = {
     "FollowUp": followup_page.run,
     "Reason Master": reason_master_page.run,
     "Logout": logout_page.run,
-
 }
-
 
 NON_EXECUTABLE_STEPS = {"Function"}
 
@@ -36,10 +33,10 @@ def _reset_ui_state(page: Page) -> None:
     _force_close_search_modal(page)
 
 
-def run_scenario(page: Page, excel: ExcelManager) -> dict:
+def run_scenario(page: Page, input_excel: ExcelManager, output_excel: ExcelManager) -> dict:
     screenshot.clear_screenshot_dir()
 
-    steps = load_scenario(excel)
+    steps = load_scenario(input_excel)  # scenario + step data always read from input
     results: list[tuple[ScenarioStep, report.StepResult]] = []
 
     for i, step in enumerate(steps, start=1):
@@ -52,12 +49,13 @@ def run_scenario(page: Page, excel: ExcelManager) -> dict:
         if module_fn is None:
             result = report.StepResult(status="FAILED", remarks=f"No module registered for '{step.step_code}'")
             results.append((step, result))
-            report.record_step_result(excel, step, result)
+            report.record_step_result(output_excel, step, result)
             continue
 
         _reset_ui_state(page)
         try:
-            module_fn(page=page, excel=excel, input_sheet=step.input_sheet)
+            # excel = read input data, output_excel = write per-row Actual/Status results
+            module_fn(page=page, excel=input_excel, output_excel=output_excel, input_sheet=step.input_sheet)
             shot_path = screenshot.capture(page, step.step_code, step.input_sheet or "")
             result = report.StepResult(status="PASSED", screenshot=shot_path)
         except Exception as exc:
@@ -66,6 +64,6 @@ def run_scenario(page: Page, excel: ExcelManager) -> dict:
             _reset_ui_state(page)
 
         results.append((step, result))
-        report.record_step_result(excel, step, result)
+        report.record_step_result(output_excel, step, result)
 
-    return report.finalize(excel, results)
+    return report.finalize(output_excel, results)

@@ -1,8 +1,7 @@
 import re
 from playwright.sync_api import Page
 from framework.browser import BrowserManager
-from config.environment import URL
-from config.settings import SHORT_WAIT_MS
+from config.settings import URL, SHORT_WAIT_MS
 
 
 class Session:

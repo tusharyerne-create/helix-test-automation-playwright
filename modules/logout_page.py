@@ -5,7 +5,7 @@ from modules.common import dismiss_error_toast
 MODULE_NAME = "Logout"
 
 
-def run(*, page: Page, excel: ExcelManager, input_sheet: str) -> None:
+def run(*, page: Page, excel: ExcelManager, output_excel: ExcelManager, input_sheet: str) -> None:
     dismiss_error_toast(page)
 
     icon = page.get_by_test_id("KeyboardArrowDownIcon")

@@ -1,3 +1,3 @@
-from config import environment, settings, urls
+from config import settings, urls
 
-__all__ = ["environment", "settings", "urls"]
+__all__ = ["settings", "urls"]

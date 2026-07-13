@@ -1,4 +1,4 @@
-from config.environment import URL
+from config.settings import URL
 
 ROUTES = {
     "/login": f"{URL}/drs/",
