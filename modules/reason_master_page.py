@@ -2,7 +2,7 @@ import re as _re
 from playwright.sync_api import Page
 from framework.excel import ExcelManager
 from framework import report
-from modules.common import do_global_search, sheet_name_from_input
+from modules.common import click_save, do_global_search, sheet_name_from_input
 
 MODULE_NAME = "Reason Master"
 
@@ -129,17 +129,7 @@ def select_row_checkbox(page: Page, reason_code: str, reason_description: str) -
 
 
 def open_action_menu_and_save(page: Page) -> None:
-    btn = page.get_by_role("button", name="Action Menu")
-    btn.click()
-    page.wait_for_timeout(500)
-    save_item = page.get_by_role("menuitem", name="Save")
-    if save_item.is_visible():
-        save_item.click()
-    else:
-        btn.click()
-        page.wait_for_timeout(500)
-        save_item.wait_for(state="visible", timeout=5000)
-        save_item.click()
+    click_save(page)
     page.wait_for_load_state("networkidle")
     page.wait_for_timeout(1500)
 

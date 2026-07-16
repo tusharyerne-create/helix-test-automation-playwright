@@ -53,3 +53,24 @@ Login credentials come from the **`login`** sheet in `test-data/PythonTest.xlsx`
 ```bash
 python runner.py
 ```
+
+### Run a selected scenario or every scenario
+
+`config/settings.py` contains the default selection:
+
+```python
+RUN_MODE = "single"       # "single" or "all"
+SCENARIO_NAME = "Scenario2"  # used when RUN_MODE is "single"
+```
+
+You can also select the run from the command line:
+
+```powershell
+# Run only one workbook
+python runner.py --scenario Scenario1
+
+# Run Scenario1, Scenario2, and every matching input workbook in test-data
+python runner.py --all
+```
+
+Each scenario creates its own output workbook. The runner starts a fresh browser session for each scenario.

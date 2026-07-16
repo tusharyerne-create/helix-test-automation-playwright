@@ -11,6 +11,7 @@ from modules import (
     listview_page,
     followup_page,
     menu_page,
+    mail_master_page,
     reason_master_page,
     logout_page,
 )
@@ -21,6 +22,7 @@ MODULE_REGISTRY = {
     "Menu": menu_page.run,
     "List view": listview_page.run,
     "FollowUp": followup_page.run,
+    "Mail Master": mail_master_page.run,
     "Reason Master": reason_master_page.run,
     "Logout": logout_page.run,
 }
@@ -33,9 +35,12 @@ def _reset_ui_state(page: Page) -> None:
     _force_close_search_modal(page)
 
 
-def run_scenario(page: Page, input_excel: ExcelManager, output_excel: ExcelManager) -> dict:
-    screenshot.clear_screenshot_dir()
-
+def run_scenario(
+    page: Page,
+    input_excel: ExcelManager,
+    output_excel: ExcelManager,
+    scenario_name: str | None = None,
+) -> dict:
     steps = load_scenario(input_excel)  # scenario + step data always read from input
     results: list[tuple[ScenarioStep, report.StepResult]] = []
 
@@ -56,10 +61,10 @@ def run_scenario(page: Page, input_excel: ExcelManager, output_excel: ExcelManag
         try:
             # excel = read input data, output_excel = write per-row Actual/Status results
             module_fn(page=page, excel=input_excel, output_excel=output_excel, input_sheet=step.input_sheet)
-            shot_path = screenshot.capture(page, step.step_code, step.input_sheet or "")
+            shot_path = screenshot.capture(page, scenario_name or "", step.step_code, step.input_sheet or "")
             result = report.StepResult(status="PASSED", screenshot=shot_path)
         except Exception as exc:
-            shot_path = screenshot.capture(page, step.step_code, step.input_sheet or "")
+            shot_path = screenshot.capture(page, scenario_name or "", step.step_code, step.input_sheet or "")
             result = report.StepResult(status="FAILED", screenshot=shot_path, remarks=str(exc))
             _reset_ui_state(page)
 

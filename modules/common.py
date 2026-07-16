@@ -1,4 +1,4 @@
-import json
+import re
 from playwright.sync_api import Page
 from playwright.sync_api import expect
 
@@ -162,8 +162,54 @@ def open_followup(page: Page, account_id: str) -> None:
 
     page.wait_for_timeout(2000)
 
+def _result_combobox(page: Page):
+    named = page.get_by_role("combobox", name="Result")
+    if named.count() and named.first.is_visible():
+        return named.first
+
+    # Follow Up currently exposes Result as the first visible combobox but
+    # without an accessible name. This is a deliberate fallback for that UI.
+    comboboxes = page.get_by_role("combobox")
+    for index in range(comboboxes.count()):
+        candidate = comboboxes.nth(index)
+        if candidate.is_visible():
+            return candidate
+    raise RuntimeError("Follow Up Result dropdown was not visible")
+
+
 def select_result_code(page: Page, result_code: str) -> None:
-    dropdown = page.get_by_role("combobox", name="Result")
+    dropdown = _result_combobox(page)
+    dropdown.click()
+    dropdown.fill(result_code)
+
+    starts_with_code = re.compile(
+        rf"^\s*{re.escape(result_code)}(?:\s|$)", re.IGNORECASE
+    )
+    for strategy in [
+        lambda: page.get_by_role("option", name=result_code, exact=True).first,
+        lambda: page.locator('[role="listbox"]').get_by_text(result_code, exact=True).first,
+        lambda: page.get_by_role("option", name=starts_with_code).first,
+        lambda: page.locator('[role="listbox"] [role="option"]').filter(
+            has_text=starts_with_code
+        ).first,
+        lambda: page.get_by_role("option", name=result_code).first,
+    ]:
+        try:
+            option = strategy()
+            option.wait_for(state="visible", timeout=5_000)
+            option.click()
+            break
+        except Exception:
+            continue
+    else:
+        raise RuntimeError(f"Result Code '{result_code}' not found in dropdown")
+
+    actual = dropdown.input_value()
+    if not re.search(rf"(?:^|\W){re.escape(result_code)}(?:\W|$)", actual, re.IGNORECASE):
+        raise RuntimeError(f"Dropdown mismatch: expected {result_code}, got {actual}")
+    return
+
+    # Legacy fallback retained below temporarily for reference.
     dropdown.click()
     page.wait_for_timeout(300)
     page.keyboard.press("Control+A")
@@ -194,10 +240,17 @@ def select_result_code(page: Page, result_code: str) -> None:
 
 
 def click_save(page: Page) -> None:
+    """Save the current module form through the shared Action Menu flow.
+
+    All module pages use the same Action Menu / Save Speed Dial pattern.  Keep
+    the retry here so module implementations do not each need their own save
+    button handling.
+    """
     action_menu = page.get_by_role("button", name="Action Menu")
+    action_menu.wait_for(state="visible", timeout=10000)
     action_menu.click()
     page.wait_for_timeout(1000)
-    save_btn = page.get_by_role("menuitem", name="Save")
+    save_btn = page.get_by_role("menuitem", name="Save", exact=True)
     try:
         save_btn.wait_for(state="visible", timeout=3000)
     except Exception:

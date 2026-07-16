@@ -3,7 +3,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 URL = "http://10.165.100.49:9010"
-HEADLESS = True
+HEADLESS = False
 BROWSER = "firefox"
 
 DEFAULT_TIMEOUT_MS = 30_000
@@ -11,6 +11,10 @@ NETWORK_IDLE_TIMEOUT_MS = 15_000
 SHORT_WAIT_MS = 1_000
 
 TEST_DATA_DIR = os.path.join(BASE_DIR, "test-data")
+
+# Choose "single" to run only SCENARIO_NAME, or "all" to run every
+# PythonTest_Input_Scenario*.xlsx workbook in test-data one after another.
+RUN_MODE = "single"
 SCENARIO_NAME = "Scenario2"
 INPUT_EXCEL_PATH = os.path.join(TEST_DATA_DIR, f"PythonTest_Input_{SCENARIO_NAME.lower()}.xlsx")
 

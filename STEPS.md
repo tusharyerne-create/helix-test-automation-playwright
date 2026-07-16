@@ -9,6 +9,7 @@ Activate the project environment if needed, then record the page flow from the r
 ```powershell
 .\venv\Scripts\Activate.ps1
 python -m playwright codegen --browser firefox "<application-url>"
+URL- python -m playwright codegen --browser firefox http://10.165.100.49:9010/drs/
 ```
 
 Use the URL from `config/settings.py` or navigate from the login page. Record one business flow at a time: login, navigation, data entry, save/submit, and the expected confirmation/result.
@@ -44,17 +45,20 @@ The prompt instructs the agent to analyse the current module implementations and
 
 ## 4. Add Excel input data
 
-This project does **not** use an `/input` folder. Add the required worksheet to the input workbook under `test-data/`; the exact workbook filename comes from `INPUT_EXCEL_PATH` in `config/settings.py`.
+This project does **not** use an `/input` folder. For each new feature module, create a separate workbook under `test-data/` named `PythonTest_Input_Scenario<N>.xlsx`, using the next unused scenario number. Do not add a new feature to an existing Scenario workbook.
 
-1. Create a worksheet named `<sheet_name>`. For new features prefer lowercase snake case; retain existing legacy sheet names as they are.
-2. Add exact field headers in row 1, based on what the module reads.
-3. Include `Actual` and `Status` headers so the runner can write row results.
-4. Add one input row per test case.
-5. In the `Scenario` sheet, add a row:
+1. Copy the common prerequisite steps and their sheets into the new workbook: `Login`, `Home Page`, `Menu`, and `Logout`.
+2. Create a worksheet named `<sheet_name>`. For new features prefer lowercase snake case; retain existing legacy sheet names as they are.
+3. Add exact field headers in row 1, based on what the module reads.
+4. Include `Actual` and `Status` headers so the runner can write row results.
+5. Add one input row per test case.
+6. In the `Scenario` sheet, add the new row between `Menu` and `Logout`:
 
 | Column A: step code | Column B: input sheet |
 | --- | --- |
 | `<Module Display Name>` | `/<sheet_name>` |
+
+If the module uses Global Search, add its display name to the new workbook's `MenuPage` sheet.
 
 Do not put real credentials, tokens, or production-sensitive data in the workbook.
 
@@ -76,6 +80,15 @@ From the repository root:
 ```powershell
 python runner.py
 ```
+
+To run one workbook explicitly or all scenario workbooks one by one:
+
+```powershell
+python runner.py --scenario Scenario1
+python runner.py --all
+```
+
+Alternatively set `RUN_MODE = "all"` in `config/settings.py` and run `python runner.py`.
 
 Results are written to the output workbook configured by `framework/output_manager.py`. Scenario-level status is written to the output `Scenario` sheet; row-level `Actual` and `Status` results are written to the module worksheet. Failure screenshots are saved under `screenshots/`.
 

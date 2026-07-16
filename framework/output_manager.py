@@ -46,7 +46,7 @@ def _build_output_from_input(output_path: str, input_path: str = INPUT_EXCEL_PAT
     wb.save(output_path)
 
 
-def get_output_path(scenario_name: str = SCENARIO_NAME) -> str:
+def get_output_path(scenario_name: str = SCENARIO_NAME, input_path: str | None = None) -> str:
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -58,5 +58,8 @@ def get_output_path(scenario_name: str = SCENARIO_NAME) -> str:
     new_name = f"{scenario_name}_{now.strftime('%Y%m%d')}_{now.strftime('%H%M%S')}.xlsx"
     new_path = os.path.join(OUTPUT_DIR, new_name)
 
-    _build_output_from_input(new_path)  # always fresh from the current input file
+    _build_output_from_input(
+        new_path,
+        input_path or INPUT_EXCEL_PATH,
+    )  # always fresh from the selected input file
     return new_path
